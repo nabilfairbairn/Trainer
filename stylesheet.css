@@ -1,0 +1,97 @@
+body {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    border: 1px solid black;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 1em;
+}
+.column {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1em;
+}
+
+.breakdown {
+    width: 10em;
+    height: 1em;
+    border: 1px solid black;
+    border-radius: 1em;
+    margin: 1em;
+}
+
+.form {
+    position: absolute;
+    top: 5rem;
+    margin-left: auto;
+    margin-right: auto;
+    background: white;
+    border: black 2px solid;
+}
+
+.training_day {
+    cursor: pointer;
+}
+.team, .athlete, .edit {
+    cursor: pointer;
+}
+.activity_header {
+    padding-bottom: 0.25em;
+}
+.activity_header, .activity {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 0.2em;
+}
+.activity_header span, .activity span {
+    display: flex;
+}
+.activity_header :nth-child(1), .activity span:nth-child(1) {
+    flex: 6 0 0;
+}
+.activity_header :nth-child(2), .activity_header :nth-child(3), .activity_header :nth-child(4), .activity :nth-child(2), .activity :nth-child(3), .activity :nth-child(4) {
+    flex: 1 0 0;
+}
+
+.completion_box {
+    display: flex;
+    width: 1.2em;
+    height: 1.2em;
+    border: 2px solid black;
+    border-radius: 0.2em;
+}
+
+.add_button {
+    width: 1.2em;
+    height: 1.2em;
+    border: solid 2px black;
+    border-radius: 1em;
+    display: flex;
+    justify-content: center;
+    margin-right: 1em;
+    cursor: pointer;
+}
+.add_button::after {
+    display: flex;
+    content: '+';
+    font-weight: bold;
+    align-self: center;
+}
+
+.closed {
+    display: none;
+}
+
+@media (min-aspect-ratio: 8/9) { /* Wider screens */
+    body {
+    width: 25%;
+    margin-left: 35.25%;
+    margin-right: 35.25%;
+    }
+  }

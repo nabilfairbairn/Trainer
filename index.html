@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="stylesheet.css">
+    <script type="module" src="script.js"></script>
+</head>
+<body>
+
+    <div id="default_interface">
+        <h1 id="athlete">Eleonore (Gold 13)</h1>
+        <div class="row">
+            <h2 id="weekday">Tuesday</h2> <div id="day_breakdown" class="breakdown"></div>
+        </div>
+
+        <div class="2-column">
+            <div class="event" id="Warmup">
+                <div class="row">
+                    <h3 class="event_name">Warmup</h3><div class="breakdown" for="Warmup"></div>
+                </div>
+
+                <div class="row activity_header">
+                    <span>Activity</span>
+                    <span>S</span>
+                    <span>R</span>
+                    <span>Done</span>
+                </div>
+
+                <div class="activity">
+                    <span>Light shuffle runs</span>
+                    <span>3</span>
+                    <span>1 min</span>
+                    <span><div class="completion_box"></div></span>
+                </div>
+                <div class="activity">
+                    <span>Block jumps</span>
+                    <span>2</span>
+                    <span>1 line</span>
+                    <span><div class="completion_box"></div></span>
+                </div>
+
+                <div class="row">
+                    <div class="add_button"></div>
+                    <span>Add an activity</span>
+                </div> 
+
+            </div>
+
+            <div class="event" id="Vault">
+                <div class="row">
+                    <h3 class="event_name">Vault</h3><div class="breakdown" for="Vault"></div>
+                </div>
+
+                <div class="row activity_header">
+                    <span>Activity</span>
+                    <span>S</span>
+                    <span>R</span>
+                    <span>Done</span>
+                </div>
+
+                <div class="row">
+                    <div class="add_button"></div>
+                    <span>Add an activity</span>
+                </div> 
+                
+            </div>
+
+            <div class="row">
+                <div class="add_button"></div>
+                <span>Add an event</span>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <div id="athlete_form" class="form closed">
+        <div class="row"><h1>New Athlete</h1> <button class="close" for="athlete_form">Close</button></div>
+        <form id="athlete_form_form">
+            <label for="name">Name:</label><br>
+            <input type="text" id="form_athlete_name" name="name"><br><br>
+
+            <label for="level">Level:</label><br>
+            <input type="text" id="form_athlete_level" name="level"><br><br>
+
+            <label for="age">Age:</label><br>
+            <input type="text" id="form_athlete_age" name="age"><br><br>
+
+            <label for="team">Team:</label><br>
+            <select id="form_athlete_team" name="team_name">
+
+            </select><br><br>
+
+            <label for="focus">Focus:</label><br>
+            <input type="text" id="form_athlete_focus" name="focus"><br><br>
+        </form>
+        <div id="athlete_save_button_holder" class="non_default"></div>
+        <div id="athlete_delete_button_holder" class="non_default"></div>
+    </div>
+
+    <div id="event_form" class="form closed">
+        <h1>New Event</h1>
+        <form id="event_form_form">
+            <label for="name">Name:</label><br>
+            <input type="text" id="form_athlete_name" name="name"><br><br>
+
+            <label for="level">Level:</label><br>
+            <input type="text" id="form_athlete_level" name="level"><br><br>
+
+            <label for="age">Age:</label><br>
+            <input type="text" id="form_athlete_age" name="age"><br><br>
+
+            <label for="training_days">Training Days:</label><br>
+            <input type="text" id="form_athlete_training_days" name="training_days"><br><br>
+
+            <label for="focus">Focus:</label><br>
+            <input type="text" id="form_athlete_focus" name="focus"><br><br>
+
+            <input type="submit" value="Save">
+        </form>
+    </div>
+
+    <div id="activity_form" class="form closed">
+        <h1>New Activity</h1>
+        <form id="activity_form_form">
+            <label for="focus">Focus:</label><br>
+            <input list="focuses" name="focus"><br><br>
+            <datalist id="focuses"></datalist>
+
+            <label for="exercise">Exercise:</label><br>
+            <input list="exercises" name="exercise"><br><br>
+            <datalist id="exercises"></datalist>
+
+            <label for="sets">Sets:</label><br>
+            <input type="number" name="sets"><br><br>
+
+            <label for="reps">Reps:</label><br>
+            <input type="number" name="reps"><br><br>
+
+            <label for="rep_type">Rep Type:</label><br>
+            <input type="text" name="rep_type"><br><br>
+
+            <input type="submit" value="Save">
+        </form>
+    </div>
+
+    <div id="confirm_delete_modal" class="form closed">
+        <button class="close" for="confirm_delete_modal">Close</button>
+        <p>Are you sure you want to delete <span id="confirm_delete_name"></span>?</p>
+        <p>If so, type 'delete' below:</p>
+        <form>
+            <input type="text" id="confirm_delete_input"><br>
+        </form>
+        <div id="confirm_delete_holder" class="non_default"></div>
+    </div>
+
+</body>
+</html>
