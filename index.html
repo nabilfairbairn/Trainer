@@ -86,7 +86,7 @@
             <input type="text" id="form_athlete_age" name="age"><br><br>
 
             <label for="team">Team:</label><br>
-            <select id="form_athlete_team" name="team_name">
+            <select class="form_athlete_team" name="team_name">
 
             </select><br><br>
 
@@ -120,15 +120,20 @@
     </div>
 
     <div id="activity_form" class="form closed">
-        <h1>New Activity</h1>
+        <div class="row"><h1>New Activity</h1> <button class="close" for="activity_form">Close</button></div>
         <form id="activity_form_form">
-            <label for="focus">Focus:</label><br>
-            <input list="focuses" name="focus"><br><br>
-            <datalist id="focuses"></datalist>
+            <label for="athlete_id">Athlete:</label><br>
+            <select class="form_team_athletes" name="athlete_id">
+            
+            </select><br><br>
 
-            <label for="exercise">Exercise:</label><br>
-            <input list="exercises" name="exercise"><br><br>
-            <datalist id="exercises"></datalist>
+            <label for="event_combo">Event:</label><br> <!-- Eg. R Bars = Thursday Bars | Text for now. Will need converting into a popup of its own. -->
+            <input type="text" name="event_combo"><br><br>
+
+            <label for="exercise_id">Exercise:</label><br>
+            <select class="form_exercises" name="exercise_id" id="choose_exercise">
+                
+            </select><br><br>
 
             <label for="sets">Sets:</label><br>
             <input type="number" name="sets"><br><br>
@@ -138,9 +143,46 @@
 
             <label for="rep_type">Rep Type:</label><br>
             <input type="text" name="rep_type"><br><br>
-
-            <input type="submit" value="Save">
         </form>
+        <div id="activity_save_button_holder" class="non_default"></div>
+    </div>
+
+    <div id="exercise_form" class="form closed">
+        <div class="row"><h1>New Exercise</h1> <button class="close" for="exercise_form">Close</button></div>
+        <form id="exercise_form_form">
+
+            <label for="name">Exercise Name:</label><br>
+            <input type="text" name="name"><br><br>
+
+            <label for="movement_type">Movement Type:</label><br>
+            <input type="checkbox" name="movement_type" value="Overhead Pushing">
+            <label for="movement_type">Overhead Pushing</label><br>
+            <input type="checkbox" name="movement_type" value="Overhead Pulling">
+            <label for="movement_type">Overhead Pulling</label><br>
+            <input type="checkbox" name="movement_type" value="Front Pushing">
+            <label for="movement_type">Front Pushing</label><br>
+            <input type="checkbox" name="movement_type" value="Front Pulling">
+            <label for="movement_type">Front Pulling</label><br>
+            <input type="checkbox" name="movement_type" value="Shoulder Flexion">
+            <label for="movement_type">Shoulder Flexion</label><br>
+            <input type="checkbox" name="movement_type" value="Shoulder Extension">
+            <label for="movement_type">Shoulder Extension</label><br>
+            <br>
+
+            <label for="function_f">Function:</label><br>
+            <select name="function_f">
+                <option value="Strength">Strength</option>
+                <option value="Power">Power</option>
+                <option value="Balance">Balance</option>
+                <option value="Mobility">Mobility</option>
+                <option value="Flexibility">Flexibility</option>
+            </select><br><br>
+
+            <label for="related_skills">Related Skills (separate by commas):</label><br>
+            <input type="text" name="related_skills" multi="true"><br><br>
+
+        </form>
+        <div id="exercise_save_button_holder" class="non_default"></div>
     </div>
 
     <div id="confirm_delete_modal" class="form closed">
