@@ -829,7 +829,7 @@ class siteInterface {
 
         let new_elements = document.createElement('div')
 
-        let back_button = createReturnButton(this.last_load, 'current_event')
+        let back_button = createReturnButton(function() {site_interface.openTrainingDay(event_e.day, site_interface.current_team)}, 'current_event')
         new_elements.appendChild(back_button)
 
         let event_description = document.createElement('div')
@@ -877,6 +877,7 @@ class siteInterface {
     }
     listTeamTrainingDays = async () => {
         // view that lists training days for team, without an athlete selected
+
         let new_elements = document.createElement('div')
 
         let return_button = createReturnButton(this.listTeams, 'current_team')
