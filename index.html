@@ -3,72 +3,29 @@
 <head>
     <link rel="stylesheet" href="stylesheet.css">
     <script type="module" src="script.js"></script>
+
+    <script
+    src="https://code.jquery.com/jquery-3.7.1.js"
+    integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+    crossorigin="anonymous"></script>
+
+    <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/css/selectize.default.min.css"
+    integrity="sha512-pTaEn+6gF1IeWv3W1+7X7eM60TFu/agjgoHmYhAfLEU8Phuf6JKiiE8YmsNC0aCgQv4192s4Vai8YZ6VNM6vyQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+    />
+    <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/js/selectize.min.js"
+    integrity="sha512-IOebNkvA/HZjMM7MxL0NYeLYEalloZ8ckak+NDtOViP7oiYzG5vn6WVXyrJDiJPhl4yRdmNAG49iuLmhkUdVsQ=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+    ></script>
 </head>
 <body>
 
     <div id="default_interface">
-        <h1 id="athlete">Eleonore (Gold 13)</h1>
-        <div class="row">
-            <h2 id="weekday">Tuesday</h2> <div id="day_breakdown" class="breakdown"></div>
-        </div>
-
-        <div class="2-column">
-            <div class="event" id="Warmup">
-                <div class="row">
-                    <h3 class="event_name">Warmup</h3><div class="breakdown" for="Warmup"></div>
-                </div>
-
-                <div class="row activity_header">
-                    <span>Activity</span>
-                    <span>S</span>
-                    <span>R</span>
-                    <span>Done</span>
-                </div>
-
-                <div class="activity">
-                    <span>Light shuffle runs</span>
-                    <span>3</span>
-                    <span>1 min</span>
-                    <span><div class="completion_box"></div></span>
-                </div>
-                <div class="activity">
-                    <span>Block jumps</span>
-                    <span>2</span>
-                    <span>1 line</span>
-                    <span><div class="completion_box"></div></span>
-                </div>
-
-                <div class="row">
-                    <div class="add_button"></div>
-                    <span>Add an activity</span>
-                </div> 
-
-            </div>
-
-            <div class="event" id="Vault">
-                <div class="row">
-                    <h3 class="event_name">Vault</h3><div class="breakdown" for="Vault"></div>
-                </div>
-
-                <div class="row activity_header">
-                    <span>Activity</span>
-                    <span>S</span>
-                    <span>R</span>
-                    <span>Done</span>
-                </div>
-
-                <div class="row">
-                    <div class="add_button"></div>
-                    <span>Add an activity</span>
-                </div> 
-                
-            </div>
-
-            <div class="row">
-                <div class="add_button"></div>
-                <span>Add an event</span>
-            </div>
-        </div>
     </div>
 
     
@@ -123,17 +80,18 @@
         <div class="row"><h1>New Activity</h1> <button class="close" for="activity_form">Close</button></div>
         <form id="activity_form_form">
             <label for="athlete_id">Athlete:</label><br>
-            <select class="form_team_athletes" name="athlete_id">
-            
-            </select><br><br>
+            <select id="selectize_athlete" placeholder="Pick an athlete..." name="athlete_id"></select>
+            <br><br>
 
             <label for="event_combo">Event:</label><br> <!-- Eg. R Bars = Thursday Bars | Text for now. Will need converting into a popup of its own. -->
             <input type="text" name="event_combo"><br><br>
 
             <label for="exercise_id">Exercise:</label><br>
-            <select class="form_exercises" name="exercise_id" id="choose_exercise">
-                
-            </select><br><br>
+            <div class="row">
+                <select id="selectize" placeholder="Pick an exercise..." name="exercise_id"></select>
+                <div class="add_button exercise"></div>
+            </div>
+            
 
             <label for="sets">Sets:</label><br>
             <input type="number" name="sets"><br><br>
@@ -163,18 +121,30 @@
             <label for="movement_type">Front Pushing</label><br>
             <input type="checkbox" name="movement_type" value="Front Pulling">
             <label for="movement_type">Front Pulling</label><br>
+            <input type="checkbox" name="movement_type" value="Downward Pushing">
+            <label for="movement_type">Downward Pushing</label><br>
             <input type="checkbox" name="movement_type" value="Shoulder Flexion">
             <label for="movement_type">Shoulder Flexion</label><br>
             <input type="checkbox" name="movement_type" value="Shoulder Extension">
             <label for="movement_type">Shoulder Extension</label><br>
+            <input type="checkbox" name="movement_type" value="Hip Flexion">
+            <label for="movement_type">Hip Flexion</label><br>
+            <input type="checkbox" name="movement_type" value="Hip Extension">
+            <label for="movement_type">Hip Extension</label><br>
+            <input type="checkbox" name="movement_type" value="Legs Pushing">
+            <label for="movement_type">Legs Pushing</label><br>
+            <input type="checkbox" name="movement_type" value="Legs Pulling">
+            <label for="movement_type">Legs Pulling</label><br>
+            <input type="checkbox" name="movement_type" value="Korbet">
+            <label for="movement_type">Korbet</label><br>
+            <input type="checkbox" name="movement_type" value="Handstand">
+            <label for="movement_type">Handstand</label><br>
             <br>
 
             <label for="function_f">Function:</label><br>
             <select name="function_f">
                 <option value="Strength">Strength</option>
-                <option value="Power">Power</option>
                 <option value="Balance">Balance</option>
-                <option value="Mobility">Mobility</option>
                 <option value="Flexibility">Flexibility</option>
             </select><br><br>
 

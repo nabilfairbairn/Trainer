@@ -1,4 +1,5 @@
 const api_url_base = 'https://scrambler-api.onrender.com'
+let highest_z_index = 0
 
 async function fetchPostWrapper(url_endpoint, params, response_function, error_function=null) {
     const full_url = `${api_url_base}${url_endpoint}` // endpoint starts with '/'
@@ -82,8 +83,11 @@ async function fetchPostWrapper(url_endpoint, params, response_function, error_f
 }
 
 function openModal(modal_name, event) {
+    highest_z_index++
+    
     let modal = document.getElementById(modal_name)
     modal.classList.remove('closed')
+    modal.style.zIndex = highest_z_index
 
     if (modal_name == 'event_form') {
         // set event_form athlete and training_day
@@ -92,6 +96,8 @@ function openModal(modal_name, event) {
 }
 
 function closeModal(modal_name) {
+    highest_z_index--
+
     document.getElementById(modal_name).classList.add('closed')
     clearForm(modal_name)
 }
@@ -156,8 +162,10 @@ function setNewAthleteForm({ team_name }) {
     document.getElementById('athlete_save_button_holder').appendChild(save_button)
 }
 
-function setNewActivityForm({ athlete_id }) {
-    setTeamFormAthletes(athlete_id) // in new activity form, set athlete options
+function setNewActivityForm(params) {
+    setTeamFormAthletes(params) // in new activity form, set athlete options
+
+    setActivityFormEvent()
 
     setFormExercises()
 
@@ -165,32 +173,49 @@ function setNewActivityForm({ athlete_id }) {
     document.getElementById('activity_save_button_holder').appendChild(save_button)
 }
 
+$('.add_button.exercise')[0].addEventListener('click', function() {
+    openModal('exercise_form')
+    setCreateExerciseForm()
+})
+
+function setActivityFormEvent() {
+    let event = site_interface.current_event
+    console.log(event)
+    let event_name = event.event_name
+    let day = event.day
+
+    let event_input = document.querySelectorAll('#activity_form_form [name=event_combo]')[0]
+    event_input.value = `${day} ${event_name}`
+}
+
 function setFormExercises(selected_exercise_id) {
 
-    let exercise_selects = document.querySelectorAll('.form_exercises')
+    var $select = $('#selectize').selectize({
+        maxItems: 1,
+        valueField: 'id',
+        labelField: 'title',
+        searchField: 'title',
+        options: [
+        ],
+        create: false
+      });
 
-    exercise_selects.forEach(select => {
-        select.textContent = ''
+    let selector = $select[0].selectize
 
-        select.appendChild(document.createElement('option'))
+    let exercise_options = site_interface.createExerciseOptions() // TODO: needs updated - currently creates DOM elements which aren't needed.
+    exercise_options.forEach(option => {
+        // set selectize
+        let name = option.innerText
+        let id = option.value
+        let newoption = {id: id, title: name}
+        selector.addOption(newoption)
 
-        // add Create new option
-        let new_option = createNewExerciseOption()
-        select.appendChild(new_option)
-        
-        // Will need to create advanced search option
+        if (option.value == selected_exercise_id) {
+            option.selected = true
+            selector.addItem(id)
+        }
 
-        // turn all existing exercises into other options
-        let exercise_options = site_interface.createExerciseOptions()
-        exercise_options.forEach(option => {
-            select.appendChild(option)
-
-            if (option.value == selected_exercise_id) {
-                option.selected = true
-            }
-        })
     })
-
     
 }
 
@@ -212,23 +237,35 @@ function setAthleteFormTeam(team_name) {
     
 }
 
-function setTeamFormAthletes(athlete_id) {
-    
-    let athlete_options = site_interface.createAthleteOptions()
+function setTeamFormAthletes({ athlete_id }) {
 
-    let forms = document.querySelectorAll('.form_team_athletes')
+    var $select = $('#selectize_athlete').selectize({
+        maxItems: null,
+        valueField: 'id',
+        labelField: 'title',
+        searchField: 'title',
+        options: [
+        ],
+        create: false
+      });
 
-    forms.forEach(form_athletes => {
+    let selector = $select[0].selectize
 
-        form_athletes.textContent = ''
+    selector.clearOptions()
 
-        athlete_options.forEach((option) => {
-            if (option.value == athlete_id) {
-                option.selected = true
-            }
-            form_athletes.appendChild(option)
-        })
-    })
+    let athlete_options = site_interface.createAthleteOptions() // TODO: needs updated - currently creates DOM elements which aren't needed.
+    athlete_options.forEach(option => {
+        // set selectize
+        let name = option.innerText
+        let id = option.value
+        let newoption = {id: id, title: name}
+        selector.addOption(newoption)
+
+        if (option.value == athlete_id) {
+            selector.addItem(id)
+        }
+
+    }) 
 }
 
 function setEditAthleteForm(athlete) {
@@ -306,15 +343,37 @@ function openConfirmDeleteWindow(thing, modals_to_close, navigateAfterDelete) {
     openModal('confirm_delete_modal')
 }
 
-function createReturnButton(return_function) {
+function createReturnButton(return_function, clear_value) {
     let button = document.createElement('button')
     button.innerText = 'Back'
     button.classList.add('back')
-    button.addEventListener('click', return_function)
+    button.addEventListener('click', function() {
+        return_function()
+        site_interface[clear_value] = null
+    })
+    return button
+}
+
+function createDayViewButton() {
+    let button = document.createElement('button')
+    button.innerText = 'Training Days'
+    button.classList.add('nav')
+    button.addEventListener('click', site_interface.listTeamTrainingDays)
+    return button
+}
+function createAthleteViewButton() {
+    let button = document.createElement('button')
+    button.innerText = 'Athletes'
+    button.classList.add('nav')
+    button.addEventListener('click', site_interface.listAthletes)
     return button
 }
 
 function createAddButton(elementType, default_params) {
+    if (!default_params) {
+        default_params = {}
+    }
+
     let row = document.createElement('div')
     row.classList.add('row', 'add')
 
@@ -371,6 +430,18 @@ function createSaveButton(save_function, windows_to_close, navigateAfterSave) {
     })
     
     return button
+}
+
+function createActivityHeader() {
+    
+    let activity_header = document.createElement('div')
+    activity_header.classList.add('row', 'activity_header')
+    activity_header.appendChild(createElementWithText('span', 'Activity'))
+    activity_header.appendChild(createElementWithText('span', 'S'))
+    activity_header.appendChild(createElementWithText('span', 'R'))
+    activity_header.appendChild(createElementWithText('span', 'Done'))
+
+    return activity_header
 }
 
 function createElementWithText(e_type, text) {
@@ -436,7 +507,18 @@ function getFormContents(form_id) {
     Object.entries(multi_selects).forEach(([name, value]) => {
         results[name] = value
     })
-    
+
+    let selectors = $(`#${form_id} .selectized`)
+    selectors.each(function() {
+        let selectize = this
+        let select_name = selectize.getAttribute('name')
+        
+        selectize = selectize.selectize
+        let select_value = selectize.getValue()
+
+        results[select_name] = select_value
+    })
+
     return results
 }
 
@@ -450,7 +532,7 @@ function processAthleteForm() {
 
 function processActivityForm() {
     // TODO: update so exercise_id is returned. Need a create_exercise form
-    let { athlete_id, event_combo, exercise_name, sets, reps, rep_type } = getFormContents('activity_form_form') // { athlete_id, event (R Bars), Exercise name, sets, reps, rep_type }
+    let { athlete_id, event_combo, exercise_id, sets, reps, rep_type } = getFormContents('activity_form_form') // { athlete_id, event (R Bars), Exercise name, sets, reps, rep_type }
     
 
     let [day, event] = event_combo.split(' ')
@@ -466,11 +548,10 @@ function processActivityForm() {
             day = 'Sunday'
             break;
     }
-    // TODO: activity_order needs to be determined by how many existing activities belong to current athlete-event
-    let activity_order = 1
-    let exercise_id = 1
+    // TODO: activity_order needs to be determined by how many existing activities belong to current athlete-event. Default last
+    let activity_order = site_interface.getAthleteEventActivityCount(athlete_id, day, event)
 
-    return { athlete_id, day, event, sets, reps, rep_type, exercise_id, exercise_name, activity_order }
+    return { athlete_id, day, event, sets, reps, rep_type, exercise_id, activity_order }
 }
 
 function processExerciseForm() {
@@ -497,10 +578,31 @@ async function createActivity(e) {
 
     let params = processActivityForm() // { athlete_id, day, event, sets, reps, rep_type, exercise_id, activity_order }
 
-    let results = await fetchPostWrapper('/training/activities/create', params)
-    params['id'] = results['id']    
+    let athletes = params['athlete_id']
 
-    let activity = new Activity(params)
+
+
+    if (athletes instanceof Array) {
+        console.log('multiple')
+        await Promise.all(athletes.map(async (athlete_id_single) => {
+            let single_params = { ...params }
+            single_params['athlete_id'] = athlete_id_single
+
+            let results = await fetchPostWrapper('/training/activities/create', single_params)
+            single_params['id'] = results['id']    
+
+            let activity = new Activity(single_params)
+
+            console.log(activity)
+        }))
+    } else {
+        let results = await fetchPostWrapper('/training/activities/create', params)
+        params['id'] = results['id']    
+
+        let activity = new Activity(params)
+    }
+
+    
     // page refreshes and should show new activity
 
     return false
@@ -509,7 +611,6 @@ async function createActivity(e) {
 async function createExercise() {
     let params = processExerciseForm()
 
-    console.log(params)
 
     let results = await fetchPostWrapper('/training/exercises/create', params)
     params['id'] = results['id']
@@ -525,6 +626,7 @@ class siteInterface {
         this.current_team = null
         this.current_athlete = null
         this.current_training_day = null
+        this.current_event = null
         
         this.all_teams = []
         this.all_athletes = []
@@ -605,7 +707,18 @@ class siteInterface {
     createExerciseOptions = () => {
         // load all assets on page load (exercises)
         // option value needs to be exercise_id
-        return []
+        let options = []
+        this.all_exercises.forEach(exercise => {
+            let name = exercise.name
+            let id = exercise.id
+
+            let option = document.createElement('option')
+            option.value = id
+            option.innerText = name
+            options.push(option)
+        })
+
+        return options
     }
 
     // lookups
@@ -621,8 +734,17 @@ class siteInterface {
         return filtered_teams[0]['team_name']
     }
     getAthleteName = (athlete_id) => {
-        let athlete = this.all_athletes.filter(obj => obj.id == athlete_id)
+        let athlete = this.all_athletes.filter(obj => obj.id == athlete_id)[0]
         return athlete.name
+    }
+    getExerciseName = (exercise_id) => {
+        let exercise = this.all_exercises.filter(obj => obj.id == exercise_id)[0]
+        return exercise.name
+    }
+    getAthleteEventActivityCount = (athlete_id, day, event_name) => {
+        let activities = this.all_activities.filter(obj => (obj.athlete_id == athlete_id && obj.day == day && obj.event_name == event_name))
+        let n_activities = activities.length
+        return n_activities
     }
 
     filterActivites = ({ event_name, day, athlete_id }) => {
@@ -658,8 +780,10 @@ class siteInterface {
     }
     listAthletes = async (team, return_function) => {
         // are we changing teams?
-        if (team) {
+        if (team && team instanceof Team) {
             this.current_team = team
+        } else {
+            team = this.current_team
         }
         
         let team_id = this.current_team.id
@@ -678,8 +802,12 @@ class siteInterface {
             return_function = this.listTeams
         }
 
-        let return_button = createReturnButton(return_function)
+        let return_button = createReturnButton(this.listTeams, 'current_team')
         new_elements.appendChild(return_button)
+
+        let days_view_button = createDayViewButton()
+        new_elements.appendChild(days_view_button)
+
 
         team_athletes.forEach((athlete) => {
             new_elements.appendChild(athlete.createDOM())
@@ -694,7 +822,86 @@ class siteInterface {
 
         this.page = 'athlete_list'
 
-        this.last_load = async function() {await site_interface.listAthletes(null, return_function)}
+        this.last_load = async function() {await site_interface.listAthletes(team, return_function)}
+    }
+    listEventActivities = async (event_e) => {
+        this.current_event = event_e
+
+        let new_elements = document.createElement('div')
+
+        let back_button = createReturnButton(this.last_load, 'current_event')
+        new_elements.appendChild(back_button)
+
+        let event_description = document.createElement('div')
+        event_description.innerText = `${event_e.day} ${event_e.event_name} (${event_e.duration} min)`
+        new_elements.appendChild(event_description)
+
+        let athletes = this.all_athletes.filter(obj => obj.team_id = this.current_team.id)
+        let { event_name, day } = event_e
+
+        athletes.forEach(athlete => {
+            let athlete_name = athlete.name
+            let athlete_id = athlete.id
+
+            let athlete_obj = document.createElement('div')
+
+            let athlete_title = document.createElement('h2')
+            athlete_title.innerText = athlete_name
+            athlete_obj.appendChild(athlete_title)
+
+            let activities_div = document.createElement('div')
+
+            let activity_header = createActivityHeader()
+            activities_div.appendChild(activity_header)
+
+            
+            let activities = this.all_activities.filter(obj => obj.event == event_name && obj.day == day && obj.athlete_id == athlete_id)
+
+            activities.forEach(activity => {
+                
+                let activity_dom = activity.createDOM()
+                activities_div.appendChild(activity_dom)
+
+            })
+            athlete_obj.appendChild(activities_div)
+            new_elements.appendChild(athlete_obj)
+        })
+
+        let add_activity_button = createAddButton('activity')
+        new_elements.appendChild(add_activity_button)
+
+        this.replaceInterface(new_elements)
+
+        this.last_load = async function() {await site_interface.listEventActivities(event_e)}
+
+    }
+    listTeamTrainingDays = async () => {
+        // view that lists training days for team, without an athlete selected
+        let new_elements = document.createElement('div')
+
+        let return_button = createReturnButton(this.listTeams, 'current_team')
+        new_elements.appendChild(return_button)
+
+        let athletes_view_button = createAthleteViewButton()
+        new_elements.appendChild(athletes_view_button)
+
+
+        let team = this.current_team
+        let days = team.getDays()
+        let this_interface = this
+
+        days.forEach(day => {
+            let day_element = document.createElement('div')
+            day_element.classList.add('training_day')
+            day_element.innerText = day
+            day_element.addEventListener('click', function() {
+                this_interface.openTrainingDay(day, team.id)
+            })
+            new_elements.appendChild(day_element)
+        })
+    
+        
+        this.replaceInterface(new_elements)
     }
     listAthleteTrainingDays = async (athlete_id, return_function) => {
         let team_id = this.current_team.id
@@ -721,13 +928,43 @@ class siteInterface {
         return new_elements
         
     }
+
+    openTrainingDay = async (day, team_id) => {
+
+        let new_elements = document.createElement('div')
+
+        let team = this.all_teams.filter(obj => obj.id = team_id)[0]
+
+        let return_button = createReturnButton(site_interface.listTeamTrainingDays)
+        new_elements.appendChild(return_button)
+
+        let title = document.createElement('h1')
+        title.innerText = `${team.name} - ${day}:`
+
+        let day_events = team.getDayEvents(day)
+        day_events.forEach(event => { // {event_name: 'Warmup', duration: 15}
+
+            // get events on that day, create event objects for each.
+            // each event on creation calls DB to get its activities
+            let event_obj = new Event_e(event['event_name'], day, event['duration'])
+
+            // this function will call each event's listAthleteEvent to filter activities for specific athlete
+            let event_dom = event_obj.createDOM()
+            new_elements.appendChild(event_dom)
+        })
+
+        this.replaceInterface(new_elements)
+
+        this.last_load = async function() {await site_interface.openTrainingDay(day, team_id)}
+    }
+
     openAthlete = async (athlete, return_function) => {
         
         this.current_athlete = athlete
 
         let new_elements = document.createElement('div')
 
-        let return_button = createReturnButton(return_function)
+        let return_button = createReturnButton(this.listAthletes, 'current_athlete')
 
         new_elements.appendChild(return_button)
 
@@ -764,7 +1001,7 @@ class siteInterface {
 
             // get events on that day, create event objects for each.
             // each event on creation calls DB to get its activities
-            let event_obj = new Event_e(event['event_name'], day)
+            let event_obj = new Event_e(event['event_name'], day, event['duration'])
 
             // this function will call each event's listAthleteEvent to filter activities for specific athlete
             let athlete_event = event_obj.createAthleteEventDOM(athlete_id)
@@ -964,9 +1201,10 @@ class TrainingDay {
 }
 
 class Event_e {
-    constructor(event_name, day) {
+    constructor(event_name, day, duration) {
         this.event_name = event_name
         this.day = day
+        this.duration = duration
         this.activities = site_interface.filterActivites({ event_name, day }) // all activites on event and day
 
     }
@@ -979,6 +1217,17 @@ class Event_e {
         this.activities.push(new Activity(activity))
     }
 
+    createDOM = () => { // team-only event
+        let this_event = this
+        let event_obj = document.createElement('div')
+        event_obj.classList.add('event')
+        event_obj.innerText = `${this.event_name} (${this.duration} min)`
+        event_obj.addEventListener('click', function() {
+            site_interface.listEventActivities(this_event)})
+        return event_obj
+
+    }
+
     createAthleteEventDOM = (athlete_id) => {
         let new_elements = document.createElement('div')
         new_elements.classList.add('event')
@@ -989,18 +1238,12 @@ class Event_e {
         title.innerText = this.event_name
 
         // activity header
-        let activity_header = document.createElement('div')
-        activity_header.classList.add('row', 'activity_header')
-        activity_header.appendChild(createElementWithText('span', 'Activity'))
-        activity_header.appendChild(createElementWithText('span', 'S'))
-        activity_header.appendChild(createElementWithText('span', 'R'))
-        activity_header.appendChild(createElementWithText('span', 'Done'))
+        let activity_header = createActivityHeader()
 
         new_elements.appendChild(title)
         new_elements.appendChild(activity_header)
 
         this.getAthleteEvent(athlete_id).forEach((activity) => {
-            console.log(activity)
             new_elements.appendChild(activity.createDOM())
         })
 
@@ -1011,17 +1254,18 @@ class Event_e {
 }
 
 class Activity {
-    constructor({ id, athlete_id, day, event, sets, reps, rep_type, exercise_id, exercise_name, activity_order }) {
+    constructor({ id, athlete_id, day, event, sets, reps, rep_type, exercise_id, activity_order }) {
         this.id = id
         this.event = event
         this.day = day
         this.sets = sets
         this.reps = reps
         this.rep_type = rep_type
-        this.exercise_name = exercise_name
         this.exercise_id = exercise_id
         this.athlete_id = athlete_id
         this.activity_order = activity_order
+
+        this.exercise_name = site_interface.getExerciseName(exercise_id)
 
         site_interface.all_activities.push(this)
     }
@@ -1057,5 +1301,11 @@ class Exercise {
 const site_interface = new siteInterface()
 
 window.onload = async function() {
+    await site_interface.loadTeams()
+    await site_interface.loadAthletes()
+    await site_interface.loadExercises()
+    await site_interface.loadActivities()
+    
+
     site_interface.listTeams()
 }

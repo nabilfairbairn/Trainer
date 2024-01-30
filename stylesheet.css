@@ -37,7 +37,7 @@ body {
 .training_day {
     cursor: pointer;
 }
-.team, .athlete, .edit {
+.team, .athlete, .edit, .event {
     cursor: pointer;
 }
 .activity_header {
