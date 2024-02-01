@@ -278,6 +278,7 @@ function setEditAthleteForm(athlete) {
     document.getElementById('form_athlete_level').value = athlete.level
     document.getElementById('form_athlete_age').value = athlete.age
     document.getElementById('form_athlete_focus').value = athlete.focus.join(', ')
+    document.getElementById('form_athlete_notes').value = athlete.notes
 
     let save_button = createSaveButton(athlete.save, ['athlete_form'])
     document.getElementById('athlete_save_button_holder').appendChild(save_button)
@@ -287,6 +288,116 @@ function setEditAthleteForm(athlete) {
     document.getElementById('athlete_delete_button_holder').appendChild(delete_button)
     
     // replace create button with save. On modal close, delete buttons are removed, replace save with create and remove event handler
+}
+
+function createScheduleForm(day, start, end, events) {
+
+    function createEventRow() {
+        let event_row = document.createElement('div')
+        event_row.classList.add('row', 'event_holder')
+        
+
+        let nameinput = document.createElement('input')
+        nameinput.setAttribute('type', 'text')
+        nameinput.setAttribute('name', 'event_name')
+
+        let durinput = document.createElement('input')
+        durinput.setAttribute('type', 'number')
+        durinput.setAttribute('name', 'duration')
+
+        let del_button = document.createElement('button')
+        del_button.innerText = 'delete'
+        del_button.addEventListener('click', function() {
+            events_holder.removeChild(event_row)
+        })
+
+        event_row.appendChild(nameinput)
+        event_row.appendChild(durinput)
+        event_row.appendChild(del_button)
+
+        return event_row
+    }
+
+    let new_elements = document.createElement('div')
+    new_elements.classList.add('schedule')
+
+    let daylabel = createElementWithText('label', 'Day:')
+    let dayinput = document.createElement('input')
+    dayinput.setAttribute('type', 'text')
+    dayinput.setAttribute('name', 'day')
+    dayinput.value = day
+    
+    let startlabel = createElementWithText('label', 'Start Time:')
+    let startinput = document.createElement('input')
+    startinput.setAttribute('type', 'text')
+    startinput.setAttribute('name', 'start')
+    startinput.value = start
+
+    let endlabel = createElementWithText('label', 'End Time:')
+    let endinput = document.createElement('input')
+    endinput.setAttribute('type', 'text')
+    endinput.setAttribute('name', 'end')
+    endinput.value = end
+
+    let eventslabel = createElementWithText('label', 'Events:')
+    let label_row = document.createElement('div')
+    label_row.classList.add('row')
+    let eventnamelabel = createElementWithText('label', 'Event')
+    let eventdurlabel = createElementWithText('label', 'Duration')
+    label_row.appendChild(eventnamelabel)
+    label_row.appendChild(eventdurlabel)
+
+    let events_holder = document.createElement('div')
+
+    new_elements.appendChild(daylabel)
+    new_elements.appendChild(dayinput)
+    new_elements.appendChild(startlabel)
+    new_elements.appendChild(startinput)
+    new_elements.appendChild(endlabel)
+    new_elements.appendChild(endinput)
+    new_elements.appendChild(eventslabel)
+    new_elements.appendChild(label_row)
+    new_elements.appendChild(events_holder)
+
+    
+
+    events.forEach(({ event_name, duration }) => {
+        let event_row = document.createElement('div')
+        event_row.classList.add('row', 'event_holder')
+        
+
+        let nameinput = document.createElement('input')
+        nameinput.value = event_name
+        nameinput.setAttribute('type', 'text')
+        nameinput.setAttribute('name', 'event_name')
+
+        let durinput = document.createElement('input')
+        durinput.value = duration
+        durinput.setAttribute('type', 'number')
+        durinput.setAttribute('name', 'duration')
+
+        let del_button = document.createElement('button')
+        del_button.innerText = 'delete'
+        del_button.addEventListener('click', function() {
+            events_holder.removeChild(event_row)
+        })
+
+        event_row.appendChild(nameinput)
+        event_row.appendChild(durinput)
+        event_row.appendChild(del_button)
+
+        events_holder.appendChild(event_row)
+    })
+
+    let add_button = document.createElement('button')
+    add_button.innerText = 'Add Event'
+    add_button.addEventListener('click', function() {
+        let event_row = createEventRow()
+        events_holder.appendChild(event_row)
+    })
+    new_elements.appendChild(add_button)
+
+    return new_elements
 }
 
 function createDeleteButton(thing, windows_to_close, navigateAfterDelete) {
@@ -361,6 +472,15 @@ function createDayViewButton() {
     button.addEventListener('click', site_interface.listTeamTrainingDays)
     return button
 }
+
+function createEditTeamButton() {
+    let button = document.createElement('button')
+    button.innerText = 'Edit'
+    button.classList.add('edit')
+    button.addEventListener('click', site_interface.openEditTeam)
+    return button
+}
+
 function createAthleteViewButton() {
     let button = document.createElement('button')
     button.innerText = 'Athletes'
@@ -474,7 +594,7 @@ function getFormContents(form_id) {
     let results = {}
 
     let multi_selects = {}
-    form.querySelectorAll('input').forEach((input) => {
+    form.querySelectorAll('input, textarea').forEach((input) => {
         let input_name = input.getAttribute('name')
         let input_value = input.value
         if (input.getAttribute('type') == 'number') {
@@ -523,11 +643,11 @@ function getFormContents(form_id) {
 }
 
 function processAthleteForm() {
-    let { name, level, age, team_name, focus } = getFormContents('athlete_form_form')
+    let { name, level, age, team_name, focus, notes } = getFormContents('athlete_form_form')
     focus = JSON.stringify(focus.split(', ')) // turn into list
     let team_id = site_interface.all_teams.filter(obj => obj.team_name == team_name)[0]['id']
 
-    return { name, age, level, focus, team_id }
+    return { name, age, level, focus, team_id, notes }
 }
 
 function processActivityForm() {
@@ -558,6 +678,39 @@ function processExerciseForm() {
     let { name, movement_type, function_f, related_skills } = getFormContents('exercise_form_form')
 
     return { name, movement_type, function_f, related_skills }
+}
+
+async function saveSchedule() {
+    // parse schedule
+    let days = document.querySelectorAll('#schedule_holder .schedule')
+    let schedule_json = []
+    days.forEach(schedule => {
+        let this_json = {}
+        let day = schedule.querySelector('[name=day]')
+        this_json['day'] = day.value
+
+        let start = schedule.querySelector('[name=start]')
+        this_json['start'] = start.value
+
+        let end = schedule.querySelector('[name=end]')
+        this_json['end'] = end.value
+
+        let events = []
+        schedule.querySelectorAll('.event_holder').forEach(event_h => {
+            let name = event_h.querySelector('[name=event_name]').value
+            let dur = event_h.querySelector('[name=duration]').value
+            events.push({ event_name: name, duration: dur })
+        })
+        this_json['events'] = events
+        schedule_json.push(this_json)
+    })
+
+    let { id, team_name } = site_interface.current_team
+    await fetchPostWrapper('/training/teams/update', { id, schedule: JSON.stringify(schedule_json), team_name })
+
+    site_interface.current_team.schedule = schedule_json
+    console.log(schedule_json)
+
 }
  
 async function createAthlete() {
@@ -808,6 +961,9 @@ class siteInterface {
         let days_view_button = createDayViewButton()
         new_elements.appendChild(days_view_button)
 
+        let edit_team_button = createEditTeamButton()
+        new_elements.appendChild(edit_team_button)
+
 
         team_athletes.forEach((athlete) => {
             new_elements.appendChild(athlete.createDOM())
@@ -893,7 +1049,7 @@ class siteInterface {
 
         days.forEach(day => {
             let day_element = document.createElement('div')
-            day_element.classList.add('training_day')
+            day_element.classList.add('training_day', 'item')
             day_element.innerText = day
             day_element.addEventListener('click', function() {
                 this_interface.openTrainingDay(day, team.id)
@@ -918,7 +1074,7 @@ class siteInterface {
     
             days.forEach(day => {
                 let day_element = document.createElement('div')
-                day_element.classList.add('training_day')
+                day_element.classList.add('training_day', 'item')
                 day_element.innerText = day
                 day_element.addEventListener('click', function() {
                     this_interface.openAthleteDay(day, athlete_id)
@@ -1019,6 +1175,30 @@ class siteInterface {
 
         this.page = `athlete_${athlete_id}_${day}`
     }
+
+    openEditTeam = async () => {
+        openModal('schedule_form')
+
+        // create editable schedule
+        let schedule = this.current_team.schedule
+        let schedule_holder = document.getElementById('schedule_holder')
+
+        schedule_holder.textContent = ''
+
+        schedule.forEach(({ day, start, end, events }) => {
+
+            let day_schedule = createScheduleForm(day, start, end, events)
+            schedule_holder.appendChild(day_schedule)
+
+        })
+
+        console.log(this.current_team.schedule)
+        // save on save
+        let save_button_holder = document.getElementById("schedule_save_button_holder")
+        let save_button = createSaveButton(saveSchedule, ['schedule_form'])
+        save_button_holder.textContent = ''
+        save_button_holder.appendChild(save_button)
+    }
 }
 
 // Restructure so that event isn't coupled to an athlete. Want to be able to create an overview of an event so that I can see what each athlete is doing there.
@@ -1033,7 +1213,7 @@ class Team {
         let this_team = this
         let element = document.createElement('div')
         element.innerText = this.team_name
-        element.classList.add('team')
+        element.classList.add('team', 'item')
         element.addEventListener('click', function() {
             site_interface.listAthletes(this_team, site_interface.last_load)
         })
@@ -1055,7 +1235,7 @@ class Team {
 
         days.forEach(day => {
             let day_element = document.createElement('div')
-            day_element.classList.add('training_day')
+            day_element.classList.add('training_day', 'item')
             day_element.innerText = day
             day_element.addEventListener('click', function() {
                 site_interface.openAthleteDay(this_training_day)
@@ -1065,12 +1245,16 @@ class Team {
 
         return new_elements
     }
+    save = () => {
+
+    }
 
 }
 
 class Athlete {
     constructor(athlete_data) {
-        let { id, name, age, level, focus, team_id } = athlete_data
+        let { id, name, age, level, focus, team_id, notes } = athlete_data
+        this.notes = notes
         this.id = id
         this.name = name
         this.age = age
@@ -1148,16 +1332,17 @@ class Athlete {
     }
     save = async () => {
         // always save from form.
-        let { name, age, level, focus, team_id } = processAthleteForm()
+        let { name, age, level, focus, team_id, notes } = processAthleteForm()
         this.name = name
         this.age = age
         this.level = level
         this.focus = JSON.parse(focus)
         this.team_id = team_id
+        this.notes = notes
         this.processSchedule()
 
         // save in DB
-        let params = { name, age, level, focus, team_id, id: this.id }
+        let params = { name, age, level, focus, team_id, id: this.id, notes }
         await fetchPostWrapper('/training/athletes/update', params)
 
         // close form, refresh
@@ -1168,38 +1353,6 @@ class Athlete {
     }
 }
 
-class TrainingDay {
-    constructor(athlete, day) {
-        this.athlete = athlete,
-        this.day = day
-
-        
-    }
-    createDOM = () => {
-        let this_training_day = this
-
-        let day_element = document.createElement('div')
-        day_element.classList.add('training_day')
-        day_element.innerText = this.day
-        day_element.addEventListener('click', function() {
-            site_interface.openTrainingDay(this_training_day)
-        })
-
-        return day_element
-    }
-
-
-    save = async () => {
-        // Read all activites and update/ save where needed
-        Object.values(this.event_objects).forEach((event) => {
-            let event_name = event.event_name
-            event.activities.forEach((activity) => {
-                console.log(event_name, activity.exercise_name)
-            })
-        })
-
-    }
-}
 
 class Event_e {
     constructor(event_name, day, duration) {
@@ -1221,7 +1374,7 @@ class Event_e {
     createDOM = () => { // team-only event
         let this_event = this
         let event_obj = document.createElement('div')
-        event_obj.classList.add('event')
+        event_obj.classList.add('event', 'item')
         event_obj.innerText = `${this.event_name} (${this.duration} min)`
         event_obj.addEventListener('click', function() {
             site_interface.listEventActivities(this_event)})
@@ -1231,7 +1384,7 @@ class Event_e {
 
     createAthleteEventDOM = (athlete_id) => {
         let new_elements = document.createElement('div')
-        new_elements.classList.add('event')
+        new_elements.classList.add('event', 'item')
 
         // add row when breakdown is added
         let title = document.createElement('h3')

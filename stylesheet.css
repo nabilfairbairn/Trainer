@@ -25,6 +25,15 @@ body {
     margin: 1em;
 }
 
+.item {
+    margin: 0.5em;
+    margin-left: 0;
+}
+
+button {
+    margin: 0.5em;
+}
+
 .form {
     position: absolute;
     top: 5rem;
@@ -32,12 +41,16 @@ body {
     margin-right: auto;
     background: white;
     border: black 2px solid;
+
+    max-width: 800px;
 }
 
-.training_day {
-    cursor: pointer;
+textarea {
+    min-height: 6em;
+    min-width: 16em;
 }
-.team, .athlete, .edit, .event {
+
+.team, .athlete, .edit, .event, .training_day {
     cursor: pointer;
 }
 .activity_header {
@@ -57,6 +70,20 @@ body {
 }
 .activity_header :nth-child(2), .activity_header :nth-child(3), .activity_header :nth-child(4), .activity :nth-child(2), .activity :nth-child(3), .activity :nth-child(4) {
     flex: 1 0 0;
+}
+
+.horizontal_scroll {
+    display: flex;
+    flex-direction: row;
+    overflow-x: scroll;
+
+}
+
+.schedule {
+    border: solid black 2px;
+    border-radius: 16px;
+    padding: 1em;
+    margin: 2em;
 }
 
 .completion_box {
