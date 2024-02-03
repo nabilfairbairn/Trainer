@@ -58,26 +58,13 @@
         <div id="athlete_delete_button_holder" class="non_default"></div>
     </div>
 
-    <div id="event_form" class="form closed">
-        <h1>New Event</h1>
-        <form id="event_form_form">
-            <label for="name">Name:</label><br>
-            <input type="text" id="form_athlete_name" name="name"><br><br>
-
-            <label for="level">Level:</label><br>
-            <input type="text" id="form_athlete_level" name="level"><br><br>
-
-            <label for="age">Age:</label><br>
-            <input type="text" id="form_athlete_age" name="age"><br><br>
-
-            <label for="training_days">Training Days:</label><br>
-            <input type="text" id="form_athlete_training_days" name="training_days"><br><br>
-
-            <label for="focus">Focus:</label><br>
-            <input type="text" id="form_athlete_focus" name="focus"><br><br>
-
-            <input type="submit" value="Save">
+    <div id="team_form" class="form closed">
+        <div class="row"><h1>New Team</h1> <button class="close" for="team_form">Close</button></div>
+        <form>
+            <label>Team Name:</label>
+            <input id="team_form_name" type="text"><br><br>
         </form>
+        <div id="save_team_button_holder"></div>
     </div>
 
     <div id="activity_form" class="form closed">
@@ -88,7 +75,7 @@
             <br><br>
 
             <label for="event_combo">Event:</label><br> <!-- Eg. R Bars = Thursday Bars | Text for now. Will need converting into a popup of its own. -->
-            <input type="text" name="event_combo"><br><br>
+            <input id="activity_event" type="text" name="event_combo"><br><br>
 
             <label for="exercise_id">Exercise:</label><br>
             <div class="row">
@@ -96,15 +83,14 @@
                 <div class="add_button exercise"></div>
             </div>
             
-
             <label for="sets">Sets:</label><br>
-            <input type="number" name="sets"><br><br>
+            <input id="activity_sets" type="number" name="sets"><br><br>
 
             <label for="reps">Reps:</label><br>
-            <input type="number" name="reps"><br><br>
+            <input id="activity_reps" type="number" name="reps"><br><br>
 
             <label for="rep_type">Rep Type:</label><br>
-            <input type="text" name="rep_type"><br><br>
+            <input id="activity_rep_type" type="text" name="rep_type"><br><br>
         </form>
         <div id="activity_save_button_holder" class="non_default"></div>
     </div>

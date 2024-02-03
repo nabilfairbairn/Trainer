@@ -82,17 +82,13 @@ async function fetchPostWrapper(url_endpoint, params, response_function, error_f
     return return_value
 }
 
-function openModal(modal_name, event) {
+function openModal(modal_name) {
     highest_z_index++
     
     let modal = document.getElementById(modal_name)
     modal.classList.remove('closed')
     modal.style.zIndex = highest_z_index
 
-    if (modal_name == 'event_form') {
-        // set event_form athlete and training_day
-        modal.setAttribute('athlete_id', '')
-    }
 }
 
 function closeModal(modal_name) {
@@ -173,6 +169,13 @@ function setNewActivityForm(params) {
     document.getElementById('activity_save_button_holder').appendChild(save_button)
 }
 
+function setNewTeamForm() {
+    $('#team_form_name').val('')
+    $('#save_team_button_holder').text('')
+    let save_button = createSaveButton(createTeam, ['team_form'])
+    $('#save_team_button_holder').append(save_button)
+}
+
 $('.add_button.exercise')[0].addEventListener('click', function() {
     openModal('exercise_form')
     setCreateExerciseForm()
@@ -181,8 +184,8 @@ $('.add_button.exercise')[0].addEventListener('click', function() {
 function setActivityFormEvent() {
     let event = site_interface.current_event
     console.log(event)
-    let event_name = event.event_name
-    let day = event.day
+    let event_name = event?.event_name || ''
+    let day = site_interface.current_day
 
     let event_input = document.querySelectorAll('#activity_form_form [name=event_combo]')[0]
     event_input.value = `${day} ${event_name}`
@@ -291,6 +294,20 @@ function setEditAthleteForm(athlete) {
 }
 
 function createScheduleForm(day, start, end, events) {
+
+    if (events === undefined) {
+        events = []
+    }
+    if (day === undefined) {
+        day = ''
+    }
+    if (start === undefined) {
+        start = ''
+    }
+    if (end === undefined) {
+        end = ''
+    }
+    
 
     function createEventRow() {
         let event_row = document.createElement('div')
@@ -444,7 +461,7 @@ function openConfirmDeleteWindow(thing, modals_to_close, navigateAfterDelete) {
             if (navigateAfterDelete) {
                 navigateAfterDelete()
             } else {
-                site_interface.refreshCurrentPage()
+                site_interface.last_load()
             }
             
         }
@@ -508,22 +525,34 @@ function createAddButton(elementType, default_params) {
 
     switch (elementType) {
         case 'athlete':
-            button.addEventListener('click', function(e) {
-                openModal('athlete_form', e)
+            button.addEventListener('click', function() {
+                openModal('athlete_form')
                 setNewAthleteForm(default_params) // save button isn't fed an athlete
             })
             break;
         case 'event':
-            button.addEventListener('click', function(e) {
-                openModal('event_form', e)
+            button.addEventListener('click', function() {
+                openModal('event_form')
             })
             break;
         case 'activity':
-            button.addEventListener('click', function(e) {
-                openModal('activity_form', e)
+            button.addEventListener('click', function() {
+                openModal('activity_form')
                 setNewActivityForm(default_params)
             })
             break;
+        case 'team':
+            button.addEventListener('click', function() {
+                openModal('team_form')
+                setNewTeamForm()
+            })
+            break;
+        case 'day':
+            button.id = 'add_schedule_button'
+            button.addEventListener('click', function() {
+                let empty_schedule = createScheduleForm()
+                $('#add_schedule_button').before(empty_schedule)
+            })
     }
     return row
 }
@@ -727,6 +756,16 @@ async function createAthlete() {
     return false
 }
 
+async function createTeam() {
+    let team_name = $('#team_form_name').val()
+    let params = { team_name }
+    let results = await fetchPostWrapper('/training/teams/create', params)
+    params['id'] = results['id']
+
+    let new_team = new Team(params)
+    return false
+}
+
 async function createActivity(e) {
 
     let params = processActivityForm() // { athlete_id, day, event, sets, reps, rep_type, exercise_id, activity_order }
@@ -773,6 +812,7 @@ async function createExercise() {
 
     return false
 }
+
 
 class siteInterface {
     constructor() {
@@ -921,17 +961,23 @@ class siteInterface {
 
         let new_elements = document.createElement('div')
 
+        let page_title = createElementWithText('h1', 'Teams:')
+        new_elements.appendChild(page_title)
+
         this.all_teams.forEach((team) => {
             let team_dom = team.createDOM()
             new_elements.appendChild(team_dom)
         })
-        this.replaceInterface(new_elements)
 
-        this.page = 'team_list'
+        let add_button = createAddButton('team')
+        new_elements.appendChild(add_button)
+        this.replaceInterface(new_elements)
 
         this.last_load = this.listTeams
     }
     listAthletes = async (team, return_function) => {
+        // Display all athletes on a team
+
         // are we changing teams?
         if (team && team instanceof Team) {
             this.current_team = team
@@ -976,16 +1022,15 @@ class siteInterface {
 
         this.replaceInterface(new_elements)
 
-        this.page = 'athlete_list'
-
         this.last_load = async function() {await site_interface.listAthletes(team, return_function)}
     }
     listEventActivities = async (event_e) => {
+        // Display all activities, grouped by athlete, for an event (on a specific day)
         this.current_event = event_e
 
         let new_elements = document.createElement('div')
 
-        let back_button = createReturnButton(function() {site_interface.openTrainingDay(event_e.day, site_interface.current_team)}, 'current_event')
+        let back_button = createReturnButton(function() {site_interface.openTrainingDay(event_e.day)}, 'current_event')
         new_elements.appendChild(back_button)
 
         let event_description = document.createElement('div')
@@ -1032,7 +1077,7 @@ class siteInterface {
 
     }
     listTeamTrainingDays = async () => {
-        // view that lists training days for team, without an athlete selected
+        // Display all days that team trains. Athlete not selected
 
         let new_elements = document.createElement('div')
 
@@ -1059,6 +1104,8 @@ class siteInterface {
     
         
         this.replaceInterface(new_elements)
+
+        this.last_load = this.listTeamTrainingDays
     }
     listAthleteTrainingDays = async (athlete_id, return_function) => {
         let team_id = this.current_team.id
@@ -1086,13 +1133,15 @@ class siteInterface {
         
     }
 
-    openTrainingDay = async (day, team_id) => {
+    openTrainingDay = async (day) => {
+        // Display all the events that occur on this day. Athlete not selected
+        this.current_day = day
 
         let new_elements = document.createElement('div')
 
-        let team = this.all_teams.filter(obj => obj.id = team_id)[0]
+        let team = this.current_team
 
-        let return_button = createReturnButton(site_interface.listTeamTrainingDays)
+        let return_button = createReturnButton(site_interface.listTeamTrainingDays, 'current_day')
         new_elements.appendChild(return_button)
 
         let title = document.createElement('h1')
@@ -1112,10 +1161,11 @@ class siteInterface {
 
         this.replaceInterface(new_elements)
 
-        this.last_load = async function() {await site_interface.openTrainingDay(day, team_id)}
+        this.last_load = async function() {await site_interface.openTrainingDay(day)}
     }
 
     openAthlete = async (athlete, return_function) => {
+        // Display athlete's training days
         
         this.current_athlete = athlete
 
@@ -1133,12 +1183,13 @@ class siteInterface {
 
         this.replaceInterface(new_elements)
 
-        this.page = `athlete_${athlete.id}`
-
         this.last_load = async function() {await site_interface.openAthlete(athlete, return_function)}
     }
 
     openAthleteDay = async (day, athlete_id) => {
+        // Display events athlete has on this day
+        this.current_day = day
+
         if (!this.all_activies || !this.all_activities.length) {
             await this.loadActivities()
         }
@@ -1147,7 +1198,7 @@ class siteInterface {
 
         let athlete = this.all_athletes.filter(obj => obj.id == athlete_id)[0]
 
-        let return_button = createReturnButton(async function() {await site_interface.openAthlete(athlete)})
+        let return_button = createReturnButton(async function() {await site_interface.openAthlete(athlete)}, 'current_day')
         new_elements.appendChild(return_button)
 
         let title = document.createElement('h1')
@@ -1173,7 +1224,6 @@ class siteInterface {
 
         this.last_load = async function() {await site_interface.openAthleteDay(day, athlete_id)}
 
-        this.page = `athlete_${athlete_id}_${day}`
     }
 
     openEditTeam = async () => {
@@ -1192,6 +1242,14 @@ class siteInterface {
 
         })
 
+        if (!schedule.length) {
+            let day_schedule = createScheduleForm()
+            schedule_holder.appendChild(day_schedule)
+        }
+
+        let add_day_button = createAddButton('day')
+        schedule_holder.appendChild(add_day_button)
+
         console.log(this.current_team.schedule)
         // save on save
         let save_button_holder = document.getElementById("schedule_save_button_holder")
@@ -1206,7 +1264,12 @@ class siteInterface {
 class Team {
     constructor(team_data) {
         this.team_name = team_data.team_name
-        this.schedule = JSON.parse(team_data.schedule_json)
+        if ('schedule_json' in team_data && team_data.schedule_json !== null) {
+            this.schedule = JSON.parse(team_data.schedule_json)
+        } else {
+            this.schedule = []
+        }
+        
         this.id = team_data.id
     }
     createDOM = () => {
@@ -1367,10 +1430,6 @@ class Event_e {
         return athlete_activities
     }
 
-    addActivity = (activity) => {
-        this.activities.push(new Activity(activity))
-    }
-
     createDOM = () => { // team-only event
         let this_event = this
         let event_obj = document.createElement('div')
@@ -1424,10 +1483,17 @@ class Activity {
         site_interface.all_activities.push(this)
     }
     createDOM = () => {
+        let this_activity = this
         let activity_element = document.createElement('div')
         activity_element.classList.add('activity')
 
-        activity_element.appendChild(createElementWithText('span', this.exercise_name))
+        let activity_name = createElementWithText('span', this.exercise_name)
+        activity_name.addEventListener('click', function () {
+            openModal('activity_form')
+            this_activity.setActivityUpdateForm()
+        })
+
+        activity_element.appendChild(activity_name)
         activity_element.appendChild(createElementWithText('span', this.sets))
         activity_element.appendChild(createElementWithText('span', `${this.reps} ${this.rep_type}`))
 
@@ -1436,9 +1502,86 @@ class Activity {
         finish_button.classList.add('completion_box')
         finish_span.appendChild(finish_button)
 
+        let delete_button = createDeleteButton(this, [])
+        finish_span.appendChild(delete_button)
+
         activity_element.appendChild(finish_span)
 
+        
+
         return activity_element
+    }
+
+    delete = async () => {
+
+        await fetchPostWrapper('/training/activities/delete', { id: this.id })
+        site_interface.all_activities = site_interface.all_activities.filter(obj => obj.id != this.id)
+    }
+
+    update = async (changes) => {
+        
+        Object.entries(changes).forEach(([key, val]) => {
+            this[key] = val
+            
+        })
+        changes['id'] = this.id
+        this.exercise_name = site_interface.getExerciseName(this.exercise_id)
+        
+        await fetchPostWrapper('/training/activities/update', changes)
+    }
+
+    updateFromForm = async () => {
+        // if one athlete ID, update this activity
+        // if multiple, update this activity if match
+        // create new activity for rest
+
+        let params = processActivityForm() // { athlete_id, day, event, sets, reps, rep_type, exercise_id, activity_order }
+
+        let athletes = params['athlete_id']
+
+        if (athletes instanceof Array) {
+            let new_athletes = athletes.filter(obj => obj != this.athlete_id)
+            
+            await Promise.all(new_athletes.map(async (athlete_id_single) => {
+                let single_params = { ...params }
+                single_params['athlete_id'] = athlete_id_single
+
+                let results = await fetchPostWrapper('/training/activities/create', single_params)
+                single_params['id'] = results['id']    
+
+                let activity = new Activity(single_params)
+
+            }))
+
+            let this_athlete = athletes.filter(obj => obj == this.athlete_id)
+            if (this_athlete.length) {
+                let single_params = { ...params }
+                single_params['athlete_id'] = this_athlete[0]
+                await this.update(single_params)
+            }
+
+        } else {
+            await this.update(params)
+        }
+    }
+
+    setActivityUpdateForm = async () => {
+        setTeamFormAthletes({ athlete_id: this.athlete_id }) // in new activity form, set athlete options { athlete_id }
+
+        setFormExercises()
+
+
+        let selector = $('#selectize')[0].selectize
+        selector.addItem(this.exercise_id)
+
+        // set exercise, event, sets, reps, rep type
+        $('#activity_event').val(`${this.day} ${this.event}`)
+        $('#activity_sets').val(this.sets)
+        $('#activity_reps').val(this.reps)
+        $('#activity_rep_type').val(this.rep_type)
+
+        let save_button = createSaveButton(this.updateFromForm, ['activity_form'])
+        document.getElementById('activity_save_button_holder').appendChild(save_button)
     }
 }
 
