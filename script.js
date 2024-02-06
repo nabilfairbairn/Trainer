@@ -1037,7 +1037,7 @@ class siteInterface {
         event_description.innerText = `${event_e.day} ${event_e.event_name} (${event_e.duration} min)`
         new_elements.appendChild(event_description)
 
-        let athletes = this.all_athletes.filter(obj => obj.team_id = this.current_team.id)
+        let athletes = this.all_athletes.filter(obj => obj.team_id == this.current_team.id)
         let { event_name, day } = event_e
 
         athletes.forEach(athlete => {
@@ -1154,7 +1154,7 @@ class siteInterface {
             // each event on creation calls DB to get its activities
             let event_obj = new Event_e(event['event_name'], day, event['duration'])
 
-            // this function will call each event's listAthleteEvent to filter activities for specific athlete
+            // each Event calls 'listEventActivities' onclick
             let event_dom = event_obj.createDOM()
             new_elements.appendChild(event_dom)
         })
