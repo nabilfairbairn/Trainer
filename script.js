@@ -738,7 +738,6 @@ async function saveSchedule() {
     await fetchPostWrapper('/training/teams/update', { id, schedule: JSON.stringify(schedule_json), team_name })
 
     site_interface.current_team.schedule = schedule_json
-    console.log(schedule_json)
 
 }
  
@@ -1030,12 +1029,34 @@ class siteInterface {
 
         let new_elements = document.createElement('div')
 
+
         let back_button = createReturnButton(function() {site_interface.openTrainingDay(event_e.day)}, 'current_event')
         new_elements.appendChild(back_button)
 
         let event_description = document.createElement('div')
         event_description.innerText = `${event_e.day} ${event_e.event_name} (${event_e.duration} min)`
         new_elements.appendChild(event_description)
+
+        // textarea for event notes
+        let event_notes = event_e.event_notes
+        let notes_field = createElementWithText('textarea', event_notes)
+        new_elements.appendChild(notes_field)
+
+        let save_notes_button = createSaveButton(async function() {
+            let note = notes_field.value
+            let schedule = site_interface.current_team.schedule
+            let day_index = schedule.findIndex(obj => obj.day == event_e.day)
+            let event_index = schedule[day_index]['events'].findIndex(obj => obj.event_name == event_e.event_name)
+            
+            schedule[day_index]['events'][event_index]['event_notes'] = note
+
+            site_interface.current_team.schedule = schedule
+
+            let { id, team_name } = site_interface.current_team
+            await fetchPostWrapper('/training/teams/update', { id, schedule: JSON.stringify(schedule), team_name })
+
+        }, [], function() {})
+        new_elements.appendChild(save_notes_button)
 
         let athletes = this.all_athletes.filter(obj => obj.team_id == this.current_team.id)
         let { event_name, day } = event_e
@@ -1152,7 +1173,7 @@ class siteInterface {
 
             // get events on that day, create event objects for each.
             // each event on creation calls DB to get its activities
-            let event_obj = new Event_e(event['event_name'], day, event['duration'])
+            let event_obj = new Event_e(event['event_name'], day, event['duration'], event['event_notes'])
 
             // each Event calls 'listEventActivities' onclick
             let event_dom = event_obj.createDOM()
@@ -1209,7 +1230,7 @@ class siteInterface {
 
             // get events on that day, create event objects for each.
             // each event on creation calls DB to get its activities
-            let event_obj = new Event_e(event['event_name'], day, event['duration'])
+            let event_obj = new Event_e(event['event_name'], day, event['duration'], event['event_notes'])
 
             // this function will call each event's listAthleteEvent to filter activities for specific athlete
             let athlete_event = event_obj.createAthleteEventDOM(athlete_id)
@@ -1418,10 +1439,11 @@ class Athlete {
 
 
 class Event_e {
-    constructor(event_name, day, duration) {
+    constructor(event_name, day, duration, event_notes) {
         this.event_name = event_name
         this.day = day
         this.duration = duration
+        this.event_notes = event_notes
         this.activities = site_interface.filterActivites({ event_name, day }) // all activites on event and day
 
     }
@@ -1467,7 +1489,7 @@ class Event_e {
 }
 
 class Activity {
-    constructor({ id, athlete_id, day, event, sets, reps, rep_type, exercise_id, activity_order }) {
+    constructor({ id, athlete_id, day, event, sets, reps, rep_type, exercise_id, activity_order, event_part }) {
         this.id = id
         this.event = event
         this.day = day
@@ -1477,6 +1499,7 @@ class Activity {
         this.exercise_id = exercise_id
         this.athlete_id = athlete_id
         this.activity_order = activity_order
+        this.event_part = event_part
 
         this.exercise_name = site_interface.getExerciseName(exercise_id)
 
@@ -1487,13 +1510,18 @@ class Activity {
         let activity_element = document.createElement('div')
         activity_element.classList.add('activity')
 
-        let activity_name = createElementWithText('span', this.exercise_name)
-        activity_name.addEventListener('click', function () {
+        let activity_name = `${this.exercise_name}`
+        if (this.event_part) {
+            activity_name = `(${this.event_part}) ` + activity_name
+        }
+
+        let activity_title = createElementWithText('span', activity_name)
+        activity_title.addEventListener('click', function () {
             openModal('activity_form')
             this_activity.setActivityUpdateForm()
         })
 
-        activity_element.appendChild(activity_name)
+        activity_element.appendChild(activity_title)
         activity_element.appendChild(createElementWithText('span', this.sets))
         activity_element.appendChild(createElementWithText('span', `${this.reps} ${this.rep_type}`))
 
@@ -1576,6 +1604,7 @@ class Activity {
 
         // set exercise, event, sets, reps, rep type
         $('#activity_event').val(`${this.day} ${this.event}`)
+        $('#activity_event_part').val(this.event_part)
         $('#activity_sets').val(this.sets)
         $('#activity_reps').val(this.reps)
         $('#activity_rep_type').val(this.rep_type)
