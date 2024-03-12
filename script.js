@@ -1224,6 +1224,7 @@ class siteInterface {
 
         let title = document.createElement('h1')
         title.innerText = `${this.getAthleteName(athlete_id)} ${day}:`
+        new_elements.appendChild(title)
 
         let day_events = this.current_team.getDayEvents(day)
         day_events.forEach(event => { // {event_name: 'Warmup', duration: 15}
